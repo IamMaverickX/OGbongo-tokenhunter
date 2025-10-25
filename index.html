@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bongo Token Hunter - Arcade Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         
@@ -18,6 +17,7 @@
             min-height: 100vh;
             margin: 0;
             padding: 1rem;
+            touch-action: manipulation;
         }
         
         #game-container {
@@ -42,17 +42,24 @@
         .control-button {
             transition: all 0.1s ease;
             box-shadow: 0 0 8px rgba(0, 255, 170, 0.7);
+            border: none;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
         }
         
         .control-button:active {
             box-shadow: 0 0 5px rgba(0, 255, 170, 0.9);
             transform: scale(0.98);
-            background-color: #00ffaa;
+            background-color: #00ffaa !important;
         }
         
         .ui-button {
             transition: transform 0.1s;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            border: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
         
         .ui-button:active {
@@ -81,10 +88,41 @@
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
+        
+        .sound-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0, 243, 166, 0.2);
+            border: 2px solid #00f3a6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .sound-toggle:hover {
+            background: rgba(0, 243, 166, 0.3);
+        }
+        
+        .sound-toggle.muted {
+            opacity: 0.5;
+            background: rgba(255, 100, 100, 0.2);
+            border-color: #ff6464;
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
+        <!-- Sound Toggle Button -->
+        <div id="soundToggle" class="sound-toggle">
+            <span id="soundIcon">🔊</span>
+        </div>
+        
         <h1 class="text-3xl font-extrabold text-center text-[#00f3a6] mb-4">Bongo Token Hunter</h1>
         
         <div id="loadingMessage" class="text-center text-white p-4">
@@ -106,15 +144,15 @@
 
             <canvas id="gameCanvas" width="500" height="400"></canvas>
             
-            <p class="text-center text-gray-400 text-sm mb-4">Move Bongo to collect coins automatically!</p>
+            <p class="text-center text-gray-400 text-sm mb-4">Use controls to move Bongo and collect coins!</p>
 
             <div class="flex justify-between items-center p-3">
-                <div id="d-pad" class="grid grid-cols-3 grid-rows-3 gap-1 w-40 h-40">
-                    <button data-dir="up" class="control-button col-start-2 row-start-1 bg-[#00ffaa] text-gray-900 font-bold rounded-lg">UP</button>
-                    <button data-dir="left" class="control-button col-start-1 row-start-2 bg-[#00ffaa] text-gray-900 font-bold rounded-lg">LEFT</button>
+                <div id="d-pad" class="grid grid-cols-3 grid-rows-3 gap-2 w-40 h-40">
+                    <button data-dir="up" class="control-button col-start-2 row-start-1 bg-[#00ffaa] text-gray-900 font-bold rounded-lg p-2">↑</button>
+                    <button data-dir="left" class="control-button col-start-1 row-start-2 bg-[#00ffaa] text-gray-900 font-bold rounded-lg p-2">←</button>
                     <div class="col-start-2 row-start-2 flex items-center justify-center text-xs text-gray-500">MOVE</div>
-                    <button data-dir="right" class="control-button col-start-3 row-start-2 bg-[#00ffaa] text-gray-900 font-bold rounded-lg">RIGHT</button>
-                    <button data-dir="down" class="control-button col-start-2 row-start-3 bg-[#00ffaa] text-gray-900 font-bold rounded-lg">DOWN</button>
+                    <button data-dir="right" class="control-button col-start-3 row-start-2 bg-[#00ffaa] text-gray-900 font-bold rounded-lg p-2">→</button>
+                    <button data-dir="down" class="control-button col-start-2 row-start-3 bg-[#00ffaa] text-gray-900 font-bold rounded-lg p-2">↓</button>
                 </div>
 
                 <div class="flex flex-col space-y-3 w-40 h-40 justify-center items-center">
@@ -163,12 +201,45 @@
     </div>
 
     <script>
-        // SIMPLE VERSION THAT WILL DEFINITELY WORK
-        console.log("Game script loaded!");
+        // GAME VARIABLES
+        let gameRunning = false;
+        let score = 0;
+        let level = 1;
+        let sessionTokens = 0;
+        let highScore = 0;
+        let totalTokens = 0;
+        let soundEnabled = true;
         
+        // GAME OBJECTS
+        let player = {
+            x: 0,
+            y: 0,
+            width: 40,
+            height: 60,
+            speed: 5,
+            moveDirection: { up: false, down: false, left: false, right: false }
+        };
+        
+        let bullets = [];
+        let coins = [];
+        
+        // DOM ELEMENTS
+        let canvas, ctx;
+        
+        // AUDIO CONTEXT AND SOUNDS
+        let audioContext;
+        let backgroundMusic;
+        let sounds = {
+            shoot: null,
+            coinHit: null,
+            levelUp: null,
+            gameOver: null,
+            move: null
+        };
+
         // Wait for page to fully load
         window.addEventListener('load', function() {
-            console.log("Page fully loaded, starting game...");
+            console.log("Page loaded, initializing game...");
             initializeGame();
         });
 
@@ -178,39 +249,27 @@
             // Get DOM elements
             const loadingMessage = document.getElementById('loadingMessage');
             const gameUI = document.getElementById('game-ui');
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Load saved data
+            highScore = parseInt(localStorage.getItem('bongoHighScore')) || 0;
+            totalTokens = parseInt(localStorage.getItem('bongoTotalTokens')) || 0;
+            
+            // Initialize audio
+            initializeAudio();
             
             // Show game UI immediately
             loadingMessage.classList.add('hidden');
             gameUI.classList.remove('hidden');
-            console.log("Game UI should be visible now!");
-            
-            // Initialize game state
-            let gameRunning = false;
-            let score = 0;
-            let level = 1;
-            let sessionTokens = 0;
-            let highScore = localStorage.getItem('bongoHighScore') || 0;
-            let totalTokens = localStorage.getItem('bongoTotalTokens') || 0;
             
             // Update displays
             document.getElementById('highScore').textContent = highScore;
             document.getElementById('totalTokens').textContent = totalTokens;
             
-            // Player object
-            const player = {
-                x: canvas.width / 2 - 20,
-                y: canvas.height - 80,
-                width: 40,
-                height: 60,
-                speed: 5,
-                moveDirection: { up: false, down: false, left: false, right: false }
-            };
-            
-            // Game objects
-            let bullets = [];
-            let coins = [];
+            // Initialize player position
+            player.x = canvas.width / 2 - player.width / 2;
+            player.y = canvas.height - player.height - 20;
             
             // Set up event listeners
             setupEventListeners();
@@ -218,271 +277,555 @@
             // Draw initial screen
             draw();
             
-            function setupEventListeners() {
-                // Start button
-                document.getElementById('startButton').addEventListener('click', startGame);
-                document.getElementById('restartButton').addEventListener('click', startGame);
-                document.getElementById('closeModalButton').addEventListener('click', hideModal);
-                document.getElementById('withdrawButton').addEventListener('click', handleWithdrawal);
+            console.log("Game ready! Click START GAME to play.");
+        }
+        
+        function initializeAudio() {
+            try {
+                // Create audio context
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 
-                // Keyboard controls
-                document.addEventListener('keydown', (e) => {
-                    if (!gameRunning) return;
-                    switch(e.key) {
-                        case 'ArrowUp': case 'w': player.moveDirection.up = true; break;
-                        case 'ArrowDown': case 's': player.moveDirection.down = true; break;
-                        case 'ArrowLeft': case 'a': player.moveDirection.left = true; break;
-                        case 'ArrowRight': case 'd': player.moveDirection.right = true; break;
-                    }
-                });
+                // Create background music (simple oscillator-based tune)
+                createBackgroundMusic();
                 
-                document.addEventListener('keyup', (e) => {
-                    if (!gameRunning) return;
-                    switch(e.key) {
-                        case 'ArrowUp': case 'w': player.moveDirection.up = false; break;
-                        case 'ArrowDown': case 's': player.moveDirection.down = false; break;
-                        case 'ArrowLeft': case 'a': player.moveDirection.left = false; break;
-                        case 'ArrowRight': case 'd': player.moveDirection.right = false; break;
-                    }
-                });
+                // Create sound effects
+                createSoundEffects();
                 
-                // Mobile controls
-                const controlButtons = document.querySelectorAll('#d-pad button');
-                controlButtons.forEach(button => {
-                    const dir = button.dataset.dir;
-                    button.addEventListener('touchstart', (e) => {
-                        e.preventDefault();
-                        if (gameRunning) player.moveDirection[dir] = true;
-                    });
-                    button.addEventListener('touchend', (e) => {
-                        e.preventDefault();
-                        if (gameRunning) player.moveDirection[dir] = false;
-                    });
-                    button.addEventListener('mousedown', () => {
-                        if (gameRunning) player.moveDirection[dir] = true;
-                    });
-                    button.addEventListener('mouseup', () => {
-                        if (gameRunning) player.moveDirection[dir] = false;
-                    });
-                });
+                console.log("Audio initialized successfully");
+            } catch (error) {
+                console.log("Audio initialization failed:", error);
+                soundEnabled = false;
+                document.getElementById('soundToggle').classList.add('muted');
+                document.getElementById('soundIcon').textContent = '🔇';
             }
+        }
+        
+        function createBackgroundMusic() {
+            // Create a simple background melody using oscillators
+            if (!audioContext) return;
             
-            function startGame() {
-                console.log("Starting game...");
-                // Reset game state
-                score = 0;
-                level = 1;
-                sessionTokens = 0;
-                bullets = [];
-                coins = [];
-                gameRunning = true;
+            // Main oscillator for melody
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'sine';
+            gainNode.gain.value = 0.1; // Quiet background music
+            
+            // Simple melody pattern
+            const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63]; // C, E, G, C, G, E
+            let currentNote = 0;
+            
+            oscillator.start();
+            
+            // Change notes every 0.5 seconds
+            backgroundMusic = setInterval(() => {
+                if (soundEnabled && audioContext.state === 'running') {
+                    oscillator.frequency.setValueAtTime(notes[currentNote], audioContext.currentTime);
+                    currentNote = (currentNote + 1) % notes.length;
+                }
+            }, 500);
+        }
+        
+        function createSoundEffects() {
+            if (!audioContext) return;
+            
+            // Shoot sound - short beep
+            sounds.shoot = () => {
+                if (!soundEnabled) return;
                 
-                // Reset player position
-                player.x = canvas.width / 2 - 20;
-                player.y = canvas.height - 80;
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
                 
-                // Update UI
-                document.getElementById('currentScore').textContent = score;
-                document.getElementById('currentLevel').textContent = level;
-                document.getElementById('sessionTokens').textContent = sessionTokens;
-                document.getElementById('gameOverModal').classList.add('hidden');
-                document.getElementById('startButton').textContent = 'RESTART';
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
                 
-                // Start game loop
-                gameLoop();
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+            };
+            
+            // Coin hit sound - satisfying "ping"
+            sounds.coinHit = () => {
+                if (!soundEnabled) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.2);
+                
+                gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+            };
+            
+            // Level up sound - ascending tones
+            sounds.levelUp = () => {
+                if (!soundEnabled) return;
+                
+                const times = [0, 0.1, 0.2, 0.3];
+                const frequencies = [523.25, 659.25, 783.99, 1046.50]; // C, E, G, C
+                
+                times.forEach((time, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequencies[index], audioContext.currentTime + time);
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + time);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + time + 0.2);
+                    
+                    oscillator.start(audioContext.currentTime + time);
+                    oscillator.stop(audioContext.currentTime + time + 0.2);
+                });
+            };
+            
+            // Game over sound - low descending tone
+            sounds.gameOver = () => {
+                if (!soundEnabled) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(110, audioContext.currentTime + 1);
+                
+                gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.5);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 1.5);
+            };
+            
+            // Move sound - subtle click
+            sounds.move = () => {
+                if (!soundEnabled) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(100, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.05);
+            };
+        }
+        
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const soundToggle = document.getElementById('soundToggle');
+            const soundIcon = document.getElementById('soundIcon');
+            
+            if (soundEnabled) {
+                soundToggle.classList.remove('muted');
+                soundIcon.textContent = '🔊';
+                // Resume audio context if it was suspended
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+            } else {
+                soundToggle.classList.add('muted');
+                soundIcon.textContent = '🔇';
             }
+        }
+        
+        function setupEventListeners() {
+            // Sound toggle
+            document.getElementById('soundToggle').addEventListener('click', toggleSound);
             
-            function gameLoop() {
+            // Start button
+            document.getElementById('startButton').addEventListener('click', startGame);
+            document.getElementById('restartButton').addEventListener('click', startGame);
+            document.getElementById('closeModalButton').addEventListener('click', hideModal);
+            document.getElementById('withdrawButton').addEventListener('click', handleWithdrawal);
+            
+            // KEYBOARD CONTROLS
+            document.addEventListener('keydown', function(e) {
                 if (!gameRunning) return;
                 
-                update();
-                draw();
-                requestAnimationFrame(gameLoop);
-            }
-            
-            function update() {
-                // Move player
-                if (player.moveDirection.left) player.x -= player.speed;
-                if (player.moveDirection.right) player.x += player.speed;
-                if (player.moveDirection.up) player.y -= player.speed;
-                if (player.moveDirection.down) player.y += player.speed;
-                
-                // Keep player in bounds
-                player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-                player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
-                
-                // Auto-shoot bullets
-                if (Math.random() < 0.1) {
-                    bullets.push({
-                        x: player.x + player.width / 2,
-                        y: player.y,
-                        radius: 5,
-                        speed: 8
-                    });
-                }
-                
-                // Spawn coins randomly
-                if (Math.random() < 0.05 && coins.length < 10) {
-                    coins.push({
-                        x: Math.random() * (canvas.width - 30),
-                        y: -30,
-                        radius: 15,
-                        speed: 2 + Math.random() * 2
-                    });
-                }
-                
-                // Update bullets
-                for (let i = bullets.length - 1; i >= 0; i--) {
-                    bullets[i].y -= bullets[i].speed;
-                    
-                    // Remove bullets that go off screen
-                    if (bullets[i].y < -10) {
-                        bullets.splice(i, 1);
-                        continue;
-                    }
-                    
-                    // Check bullet-coin collisions
-                    for (let j = coins.length - 1; j >= 0; j--) {
-                        const dx = bullets[i].x - coins[j].x;
-                        const dy = bullets[i].y - coins[j].y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (distance < bullets[i].radius + coins[j].radius) {
-                            // Hit!
-                            score++;
-                            document.getElementById('currentScore').textContent = score;
-                            
-                            // Award tokens every 5 points
-                            if (score % 5 === 0) {
-                                sessionTokens += 10;
-                                document.getElementById('sessionTokens').textContent = sessionTokens;
-                            }
-                            
-                            // Level up every 10 points
-                            if (score % 10 === 0) {
-                                level++;
-                                document.getElementById('currentLevel').textContent = level;
-                            }
-                            
-                            coins.splice(j, 1);
-                            bullets.splice(i, 1);
-                            break;
+                let moved = false;
+                switch(e.key.toLowerCase()) {
+                    case 'arrowup': case 'w': 
+                        if (!player.moveDirection.up) {
+                            player.moveDirection.up = true;
+                            moved = true;
                         }
-                    }
+                        break;
+                    case 'arrowdown': case 's': 
+                        if (!player.moveDirection.down) {
+                            player.moveDirection.down = true;
+                            moved = true;
+                        }
+                        break;
+                    case 'arrowleft': case 'a': 
+                        if (!player.moveDirection.left) {
+                            player.moveDirection.left = true;
+                            moved = true;
+                        }
+                        break;
+                    case 'arrowright': case 'd': 
+                        if (!player.moveDirection.right) {
+                            player.moveDirection.right = true;
+                            moved = true;
+                        }
+                        break;
                 }
                 
-                // Update coins
-                for (let i = coins.length - 1; i >= 0; i--) {
-                    coins[i].y += coins[i].speed;
+                if (moved && sounds.move) {
+                    sounds.move();
+                }
+                e.preventDefault();
+            });
+            
+            document.addEventListener('keyup', function(e) {
+                if (!gameRunning) return;
+                
+                switch(e.key.toLowerCase()) {
+                    case 'arrowup': case 'w': 
+                        player.moveDirection.up = false;
+                        break;
+                    case 'arrowdown': case 's': 
+                        player.moveDirection.down = false;
+                        break;
+                    case 'arrowleft': case 'a': 
+                        player.moveDirection.left = false;
+                        break;
+                    case 'arrowright': case 'd': 
+                        player.moveDirection.right = false;
+                        break;
+                }
+                e.preventDefault();
+            });
+            
+            // MOBILE CONTROLS
+            const controlButtons = document.querySelectorAll('#d-pad button');
+            controlButtons.forEach(button => {
+                const direction = button.getAttribute('data-dir');
+                
+                // Touch events for mobile
+                button.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    if (gameRunning && !player.moveDirection[direction]) {
+                        player.moveDirection[direction] = true;
+                        if (sounds.move) sounds.move();
+                    }
+                });
+                
+                button.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    if (gameRunning) {
+                        player.moveDirection[direction] = false;
+                    }
+                });
+                
+                button.addEventListener('touchcancel', function(e) {
+                    e.preventDefault();
+                    if (gameRunning) {
+                        player.moveDirection[direction] = false;
+                    }
+                });
+                
+                // Mouse events for desktop
+                button.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    if (gameRunning && !player.moveDirection[direction]) {
+                        player.moveDirection[direction] = true;
+                        if (sounds.move) sounds.move();
+                    }
+                });
+                
+                button.addEventListener('mouseup', function(e) {
+                    e.preventDefault();
+                    if (gameRunning) {
+                        player.moveDirection[direction] = false;
+                    }
+                });
+                
+                button.addEventListener('mouseleave', function(e) {
+                    if (gameRunning) {
+                        player.moveDirection[direction] = false;
+                    }
+                });
+            });
+        }
+        
+        function startGame() {
+            console.log("Starting game...");
+            
+            // Resume audio context if needed (required for autoplay)
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Reset game state
+            gameRunning = true;
+            score = 0;
+            level = 1;
+            sessionTokens = 0;
+            bullets = [];
+            coins = [];
+            
+            // Reset player position and movement
+            player.x = canvas.width / 2 - player.width / 2;
+            player.y = canvas.height - player.height - 20;
+            player.moveDirection = { up: false, down: false, left: false, right: false };
+            
+            // Update UI
+            document.getElementById('currentScore').textContent = score;
+            document.getElementById('currentLevel').textContent = level;
+            document.getElementById('sessionTokens').textContent = sessionTokens;
+            document.getElementById('gameOverModal').classList.add('hidden');
+            document.getElementById('startButton').textContent = 'RESTART';
+            
+            // Start game loop
+            gameLoop();
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function update() {
+            // MOVE PLAYER based on current direction
+            if (player.moveDirection.left) player.x -= player.speed;
+            if (player.moveDirection.right) player.x += player.speed;
+            if (player.moveDirection.up) player.y -= player.speed;
+            if (player.moveDirection.down) player.y += player.speed;
+            
+            // Keep player in bounds
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+            
+            // AUTO-SHOOT bullets from player
+            if (Math.random() < 0.15) { // 15% chance each frame to shoot
+                bullets.push({
+                    x: player.x + player.width / 2,
+                    y: player.y,
+                    radius: 5,
+                    speed: 8
+                });
+                if (sounds.shoot) sounds.shoot();
+            }
+            
+            // SPAWN COINS randomly
+            if (Math.random() < 0.03 && coins.length < 8) { // 3% chance, max 8 coins
+                coins.push({
+                    x: Math.random() * (canvas.width - 30),
+                    y: -30,
+                    radius: 12 + Math.random() * 8, // 12-20 radius
+                    speed: 2 + Math.random() * 3
+                });
+            }
+            
+            // UPDATE BULLETS
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                bullets[i].y -= bullets[i].speed;
+                
+                // Remove bullets that go off screen
+                if (bullets[i].y < -10) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+                
+                // Check for collisions with coins
+                for (let j = coins.length - 1; j >= 0; j--) {
+                    const bullet = bullets[i];
+                    const coin = coins[j];
+                    const dx = bullet.x - coin.x;
+                    const dy = bullet.y - coin.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
                     
-                    // Check if coin reached bottom (game over)
-                    if (coins[i].y > canvas.height + 30) {
-                        gameOver();
-                        return;
+                    if (distance < bullet.radius + coin.radius) {
+                        // HIT! Remove coin and bullet
+                        score++;
+                        document.getElementById('currentScore').textContent = score;
+                        
+                        // Play coin hit sound
+                        if (sounds.coinHit) sounds.coinHit();
+                        
+                        // Award tokens
+                        sessionTokens += 5;
+                        document.getElementById('sessionTokens').textContent = sessionTokens;
+                        
+                        // Level up every 15 points
+                        if (score % 15 === 0) {
+                            level++;
+                            document.getElementById('currentLevel').textContent = level;
+                            // Increase difficulty
+                            player.speed = Math.min(8, player.speed + 0.5);
+                            // Play level up sound
+                            if (sounds.levelUp) sounds.levelUp();
+                        }
+                        
+                        coins.splice(j, 1);
+                        bullets.splice(i, 1);
+                        break;
                     }
                 }
             }
             
-            function draw() {
-                // Clear canvas
-                ctx.fillStyle = '#0b0f14';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // UPDATE COINS
+            for (let i = coins.length - 1; i >= 0; i--) {
+                coins[i].y += coins[i].speed;
                 
-                // Draw player (Bongo)
-                ctx.fillStyle = '#38b000';
-                ctx.fillRect(player.x, player.y, player.width, player.height);
-                
-                // Draw bullets
+                // Check if coin reached bottom (GAME OVER)
+                if (coins[i].y > canvas.height + 30) {
+                    gameOver();
+                    return;
+                }
+            }
+        }
+        
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = '#0b0f14';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // DRAW PLAYER (Bongo)
+            ctx.fillStyle = '#38b000';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // Draw Bongo's details
+            ctx.fillStyle = '#ff6347';
+            ctx.fillRect(player.x, player.y + player.height * 0.6, player.width, player.height * 0.4);
+            
+            ctx.fillStyle = '#ff8c00';
+            ctx.fillRect(player.x, player.y - 5, player.width, 10);
+            
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(player.x + player.width * 0.3, player.y + player.height * 0.3, 4, 0, Math.PI * 2);
+            ctx.arc(player.x + player.width * 0.7, player.y + player.height * 0.3, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // DRAW BULLETS
+            ctx.fillStyle = '#ffcc00';
+            bullets.forEach(bullet => {
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // DRAW COINS
+            coins.forEach(coin => {
                 ctx.fillStyle = '#ffcc00';
-                bullets.forEach(bullet => {
-                    ctx.beginPath();
-                    ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                });
+                ctx.beginPath();
+                ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
+                ctx.fill();
                 
-                // Draw coins
-                coins.forEach(coin => {
-                    ctx.fillStyle = '#ffcc00';
-                    ctx.beginPath();
-                    ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.strokeStyle = '#e6b800';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    ctx.fillStyle = '#0b0f14';
-                    ctx.font = 'bold 16px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('$', coin.x, coin.y);
-                });
+                ctx.strokeStyle = '#e6b800';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                ctx.fillStyle = '#0b0f14';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('$', coin.x, coin.y);
+            });
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            
+            // Play game over sound
+            if (sounds.gameOver) sounds.gameOver();
+            
+            // Update final score display
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalSessionTokens').textContent = sessionTokens;
+            
+            // Check for new high score
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('bongoHighScore', highScore);
             }
             
-            function gameOver() {
-                gameRunning = false;
-                
-                // Update final score display
-                document.getElementById('finalScore').textContent = score;
-                document.getElementById('finalSessionTokens').textContent = sessionTokens;
-                
-                // Check for new high score
-                if (score > highScore) {
-                    highScore = score;
-                    localStorage.setItem('bongoHighScore', highScore);
-                }
-                
-                // Save tokens
-                totalTokens = parseInt(totalTokens) + sessionTokens;
-                localStorage.setItem('bongoTotalTokens', totalTokens);
-                document.getElementById('totalTokens').textContent = totalTokens;
-                
-                document.getElementById('newHighScore').textContent = highScore;
-                document.getElementById('gameOverModal').classList.remove('hidden');
+            // Save tokens
+            totalTokens += sessionTokens;
+            localStorage.setItem('bongoTotalTokens', totalTokens);
+            document.getElementById('totalTokens').textContent = totalTokens;
+            
+            document.getElementById('newHighScore').textContent = highScore;
+            document.getElementById('gameOverModal').classList.remove('hidden');
+            
+            console.log("Game Over! Score:", score);
+        }
+        
+        function handleWithdrawal() {
+            const address = document.getElementById('solanaAddress').value.trim();
+            const amount = parseInt(document.getElementById('withdrawalAmount').value);
+            const messageEl = document.getElementById('withdrawalMessage');
+            
+            if (!address) {
+                showMessage('Error', 'Please enter a wallet address');
+                return;
             }
             
-            function handleWithdrawal() {
-                const address = document.getElementById('solanaAddress').value;
-                const amount = parseInt(document.getElementById('withdrawalAmount').value);
-                const messageEl = document.getElementById('withdrawalMessage');
-                
-                if (!address) {
-                    showMessage('Error', 'Please enter a wallet address');
-                    return;
-                }
-                
-                if (isNaN(amount) || amount < 100) {
-                    showMessage('Error', 'Minimum withdrawal is 100 tokens');
-                    return;
-                }
-                
-                if (amount > totalTokens) {
-                    showMessage('Error', 'Insufficient tokens');
-                    return;
-                }
-                
-                // Simulate withdrawal
-                totalTokens -= amount;
-                localStorage.setItem('bongoTotalTokens', totalTokens);
-                document.getElementById('totalTokens').textContent = totalTokens;
-                
-                messageEl.textContent = `Withdrew ${amount} tokens!`;
-                setTimeout(() => {
-                    messageEl.textContent = '';
-                }, 3000);
-                
-                showMessage('Success', `Withdrew ${amount} tokens to ${address}`);
+            if (isNaN(amount) || amount < 100) {
+                showMessage('Error', 'Minimum withdrawal is 100 tokens');
+                return;
             }
             
-            function showMessage(title, body) {
-                document.getElementById('modalTitle').textContent = title;
-                document.getElementById('modalBody').textContent = body;
-                document.getElementById('messageModal').classList.remove('hidden');
+            if (amount > totalTokens) {
+                showMessage('Error', `You only have ${totalTokens} tokens`);
+                return;
             }
             
-            function hideModal() {
-                document.getElementById('messageModal').classList.add('hidden');
-            }
+            // Simulate withdrawal
+            totalTokens -= amount;
+            localStorage.setItem('bongoTotalTokens', totalTokens);
+            document.getElementById('totalTokens').textContent = totalTokens;
             
-            console.log("Game initialized successfully!");
+            messageEl.textContent = `Withdrew ${amount} tokens!`;
+            setTimeout(() => {
+                messageEl.textContent = '';
+            }, 3000);
+            
+            showMessage('Success', `Withdrew ${amount} tokens to ${address}`);
+        }
+        
+        function showMessage(title, body) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').textContent = body;
+            document.getElementById('messageModal').classList.remove('hidden');
+        }
+        
+        function hideModal() {
+            document.getElementById('messageModal').classList.add('hidden');
         }
     </script>
 </body>

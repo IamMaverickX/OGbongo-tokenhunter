@@ -199,7 +199,7 @@
         </div>
     </div>
 
-    <script type="module">
+    <script>
         // Simple standalone version without Firebase for easy deployment
         class BongoTokenHunter {
             constructor() {
@@ -283,9 +283,9 @@
                 this.highScore = parseInt(localStorage.getItem('bongoHighScore')) || 0;
                 this.totalTokensEarned = parseInt(localStorage.getItem('bongoTotalTokens')) || 0;
                 
-                // Show game UI
+                // Show game UI - FIXED THE TYPO HERE
                 document.getElementById('loadingMessage').classList.add('hidden');
-                document.getElementById('gameUI').classList.remove('hidden');
+                document.getElementById('game-ui').classList.remove('hidden'); // Fixed from 'gameUI' to 'game-ui'
                 
                 // Update displays
                 document.getElementById('highScore').textContent = this.highScore;

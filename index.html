@@ -9,47 +9,33 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         
-        :root {
-            --primary-color: #00f3a6;
-            --secondary-color: #ffcc00;
-            --accent-color: #ff6347;
-            --background-dark: #0d1117;
-            --background-medium: #161b22;
-            --background-light: #21262d;
-            --text-light: #ffffff;
-            --text-dim: #8b949e;
-        }
-        
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--background-dark);
+            background-color: #0d1117;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
             padding: 1rem;
-            overflow-x: hidden;
         }
         
         #game-container {
-            background-color: var(--background-medium);
+            background-color: #161b22;
             border-radius: 1.5rem;
             box-shadow: 0 0 30px rgba(0, 255, 170, 0.2);
             padding: 1rem;
             max-width: 550px;
             width: 100%;
-            position: relative;
         }
         
         #gameCanvas {
-            border: 3px solid var(--primary-color);
+            border: 3px solid #00f3a6;
             border-radius: 0.75rem;
             background-color: #0b0f14;
-            touch-action: none;
             display: block;
             width: 100%;
-            aspect-ratio: 1 / 1;
+            height: 400px;
             margin-bottom: 1rem;
         }
         
@@ -61,15 +47,7 @@
         .control-button:active {
             box-shadow: 0 0 5px rgba(0, 255, 170, 0.9);
             transform: scale(0.98);
-            background-color: var(--primary-color);
-        }
-        
-        .glow {
-            text-shadow: 0 0 5px var(--secondary-color);
-        }
-        
-        .token-glow {
-            text-shadow: 0 0 5px var(--accent-color);
+            background-color: #00ffaa;
         }
         
         .ui-button {
@@ -79,16 +57,6 @@
         
         .ui-button:active {
             transform: scale(0.98);
-        }
-        
-        .game-over {
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
         }
         
         .hidden {
@@ -103,6 +71,16 @@
         .animate-spin {
             animation: spin 1s linear infinite;
         }
+        
+        .game-over {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -115,84 +93,69 @@
         </div>
         
         <div id="game-ui" class="hidden">
-            <!-- Score & High Score Display -->
             <div class="grid grid-cols-3 gap-2 mb-4 text-white font-bold text-lg p-2 bg-[#21262d] rounded-lg">
-                <p class="text-blue-400 text-sm md:text-lg">Level: <span id="currentLevel">1</span></p>
-                <p class="text-[#ffcc00] glow text-sm md:text-lg text-center">Score: <span id="currentScore">0</span></p>
-                <p class="text-[#00f3a6] text-sm md:text-lg text-right">High Score: <span id="highScore">0</span></p>
+                <p class="text-blue-400">Level: <span id="currentLevel">1</span></p>
+                <p class="text-[#ffcc00] text-center">Score: <span id="currentScore">0</span></p>
+                <p class="text-[#00f3a6] text-right">High Score: <span id="highScore">0</span></p>
             </div>
             
-            <!-- Token Display -->
             <div class="flex justify-between items-center mb-4 text-white font-bold text-sm p-2 bg-[#313a46] rounded-lg border border-red-400">
-                <p class="text-gray-300">Tokens (Session): <span id="sessionTokens" class="font-extrabold text-red-400">0</span></p>
-                <p class="text-red-400 token-glow">Total Tokens: <span id="totalTokens">0</span></p>
+                <p class="text-gray-300">Tokens: <span id="sessionTokens" class="font-extrabold text-red-400">0</span></p>
+                <p class="text-red-400">Total: <span id="totalTokens">0</span></p>
             </div>
 
-            <canvas id="gameCanvas"></canvas>
+            <canvas id="gameCanvas" width="500" height="400"></canvas>
             
-            <p class="text-center text-gray-400 text-sm mb-4">OG Bongo is automatically defending the community. Use the D-Pad to position for the perfect shot!</p>
+            <p class="text-center text-gray-400 text-sm mb-4">Move Bongo to collect coins automatically!</p>
 
-            <!-- Control Pad (D-Pad and Start Button) -->
             <div class="flex justify-between items-center p-3">
-                
-                <!-- D-Pad (Directional Movement) -->
                 <div id="d-pad" class="grid grid-cols-3 grid-rows-3 gap-1 w-40 h-40">
-                    <button data-dir="up" class="control-button col-start-2 row-start-1 bg-[#00ffaa] text-gray-900 font-bold rounded-lg text-sm p-1">UP</button>
-                    <button data-dir="left" class="control-button col-start-1 row-start-2 bg-[#00ffaa] text-gray-900 font-bold rounded-lg text-sm p-1">LEFT</button>
+                    <button data-dir="up" class="control-button col-start-2 row-start-1 bg-[#00ffaa] text-gray-900 font-bold rounded-lg">UP</button>
+                    <button data-dir="left" class="control-button col-start-1 row-start-2 bg-[#00ffaa] text-gray-900 font-bold rounded-lg">LEFT</button>
                     <div class="col-start-2 row-start-2 flex items-center justify-center text-xs text-gray-500">MOVE</div>
-                    <button data-dir="right" class="control-button col-start-3 row-start-2 bg-[#00ffaa] text-gray-900 font-bold rounded-lg text-sm p-1">RIGHT</button>
-                    <button data-dir="down" class="control-button col-start-2 row-start-3 bg-[#00ffaa] text-gray-900 font-bold rounded-lg text-sm p-1">DOWN</button>
+                    <button data-dir="right" class="control-button col-start-3 row-start-2 bg-[#00ffaa] text-gray-900 font-bold rounded-lg">RIGHT</button>
+                    <button data-dir="down" class="control-button col-start-2 row-start-3 bg-[#00ffaa] text-gray-900 font-bold rounded-lg">DOWN</button>
                 </div>
 
-                <!-- Action Buttons (Start) -->
                 <div class="flex flex-col space-y-3 w-40 h-40 justify-center items-center">
-                    <button id="startButton" class="ui-button bg-[#ffcc00] hover:bg-[#e6b800] text-gray-900 font-extrabold py-3 px-6 rounded-xl uppercase tracking-widest text-base w-full">
+                    <button id="startButton" class="ui-button bg-[#ffcc00] text-gray-900 font-extrabold py-3 px-6 rounded-xl uppercase w-full">
                         START GAME
                     </button>
                 </div>
             </div>
 
-            <!-- Token Vault / Withdrawal Section -->
-            <div class="mt-8 p-4 bg-[#21262d] rounded-xl border border-blue-500 shadow-lg">
-                <h3 class="text-xl font-bold text-blue-400 mb-4 text-center">OG Token Vault</h3>
-                
+            <div class="mt-8 p-4 bg-[#21262d] rounded-xl border border-blue-500">
+                <h3 class="text-xl font-bold text-blue-400 mb-4 text-center">Token Vault</h3>
                 <div class="mb-4">
-                    <label for="solanaAddress" class="block text-sm font-medium text-gray-300 mb-1">Solana Wallet Address</label>
-                    <input type="text" id="solanaAddress" placeholder="e.g., F5g123...abcD45" class="w-full p-2 bg-[#0d1117] text-white border border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                    <input type="text" id="solanaAddress" placeholder="Solana Address" class="w-full p-2 bg-[#0d1117] text-white border border-gray-600 rounded-lg">
                 </div>
-
                 <div class="mb-4">
-                    <label for="withdrawalAmount" class="block text-sm font-medium text-gray-300 mb-1">Amount to Withdraw (Min 100)</label>
-                    <input type="number" id="withdrawalAmount" placeholder="100" min="100" class="w-full p-2 bg-[#0d1117] text-white border border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                    <input type="number" id="withdrawalAmount" placeholder="100" min="100" class="w-full p-2 bg-[#0d1117] text-white border border-gray-600 rounded-lg">
                 </div>
-                
-                <button id="withdrawButton" class="ui-button bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-6 rounded-xl uppercase tracking-widest text-base w-full">
+                <button id="withdrawButton" class="ui-button bg-blue-600 text-white font-extrabold py-3 px-6 rounded-xl uppercase w-full">
                     Withdraw Tokens
                 </button>
-                <p id="withdrawalMessage" class="text-center mt-3 text-sm font-medium h-5"></p>
+                <p id="withdrawalMessage" class="text-center mt-3 text-sm h-5"></p>
             </div>
-
-            <p class="text-center text-gray-500 text-xs mt-6">User ID: <span id="userIdDisplay" class="font-mono text-xs text-[#00f3a6]">...</span></p>
         </div>
 
-        <div id="gameOverModal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden flex justify-center items-center p-4">
-            <div class="bg-[#1e2a36] p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full border-4 border-red-500 game-over">
+        <div id="gameOverModal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden justify-center items-center p-4">
+            <div class="bg-[#1e2a36] p-8 rounded-2xl text-center max-w-sm w-full border-4 border-red-500 game-over">
                 <h2 class="text-4xl font-black text-red-500 mb-4">GAME OVER!</h2>
-                <p class="text-xl text-white mb-2">Coins Collected: <span id="finalScore" class="font-extrabold text-[#ffcc00]">0</span></p>
-                <p class="text-xl text-white mb-4">Tokens Earned (Session): <span id="finalSessionTokens" class="font-extrabold text-red-400">0</span></p>
-                <p class="text-xl text-white mb-6">New High Score: <span id="newHighScore" class="font-extrabold text-[#00f3a6]">0</span></p>
-                <button id="restartButton" class="ui-button bg-red-600 hover:bg-red-700 text-white font-extrabold py-3 px-8 rounded-xl uppercase tracking-widest text-lg">
-                    Retry
+                <p class="text-xl text-white mb-2">Score: <span id="finalScore" class="font-extrabold text-[#ffcc00]">0</span></p>
+                <p class="text-xl text-white mb-4">Tokens: <span id="finalSessionTokens" class="font-extrabold text-red-400">0</span></p>
+                <p class="text-xl text-white mb-6">High Score: <span id="newHighScore" class="font-extrabold text-[#00f3a6]">0</span></p>
+                <button id="restartButton" class="ui-button bg-red-600 text-white font-extrabold py-3 px-8 rounded-xl uppercase text-lg">
+                    Play Again
                 </button>
             </div>
         </div>
 
-        <!-- Generic Message Modal -->
-        <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden flex justify-center items-center p-4">
-            <div class="bg-[#1e2a36] p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full border-4 border-yellow-500">
+        <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden justify-center items-center p-4">
+            <div class="bg-[#1e2a36] p-8 rounded-2xl text-center max-w-sm w-full border-4 border-yellow-500">
                 <h2 id="modalTitle" class="text-3xl font-black text-yellow-500 mb-4">Alert</h2>
-                <p id="modalBody" class="text-lg text-white mb-6">Message content.</p>
-                <button id="closeModalButton" class="ui-button bg-yellow-600 hover:bg-yellow-700 text-gray-900 font-extrabold py-3 px-8 rounded-xl uppercase tracking-widest text-lg">
+                <p id="modalBody" class="text-lg text-white mb-6">Message</p>
+                <button id="closeModalButton" class="ui-button bg-yellow-600 text-gray-900 font-extrabold py-3 px-8 rounded-xl uppercase text-lg">
                     OK
                 </button>
             </div>
@@ -200,524 +163,327 @@
     </div>
 
     <script>
-        // Simple standalone version without Firebase for easy deployment
-        class BongoTokenHunter {
-            constructor() {
-                this.canvas = document.getElementById('gameCanvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.setupEventListeners();
-                this.init();
-            }
+        // SIMPLE VERSION THAT WILL DEFINITELY WORK
+        console.log("Game script loaded!");
+        
+        // Wait for page to fully load
+        window.addEventListener('load', function() {
+            console.log("Page fully loaded, starting game...");
+            initializeGame();
+        });
+
+        function initializeGame() {
+            console.log("Initializing game...");
             
-            setupEventListeners() {
-                // Game controls
-                document.getElementById('startButton').addEventListener('click', () => this.startGame());
-                document.getElementById('restartButton').addEventListener('click', () => this.startGame());
-                document.getElementById('closeModalButton').addEventListener('click', () => this.hideModal());
-                document.getElementById('withdrawButton').addEventListener('click', () => this.handleWithdrawal());
+            // Get DOM elements
+            const loadingMessage = document.getElementById('loadingMessage');
+            const gameUI = document.getElementById('game-ui');
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Show game UI immediately
+            loadingMessage.classList.add('hidden');
+            gameUI.classList.remove('hidden');
+            console.log("Game UI should be visible now!");
+            
+            // Initialize game state
+            let gameRunning = false;
+            let score = 0;
+            let level = 1;
+            let sessionTokens = 0;
+            let highScore = localStorage.getItem('bongoHighScore') || 0;
+            let totalTokens = localStorage.getItem('bongoTotalTokens') || 0;
+            
+            // Update displays
+            document.getElementById('highScore').textContent = highScore;
+            document.getElementById('totalTokens').textContent = totalTokens;
+            
+            // Player object
+            const player = {
+                x: canvas.width / 2 - 20,
+                y: canvas.height - 80,
+                width: 40,
+                height: 60,
+                speed: 5,
+                moveDirection: { up: false, down: false, left: false, right: false }
+            };
+            
+            // Game objects
+            let bullets = [];
+            let coins = [];
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Draw initial screen
+            draw();
+            
+            function setupEventListeners() {
+                // Start button
+                document.getElementById('startButton').addEventListener('click', startGame);
+                document.getElementById('restartButton').addEventListener('click', startGame);
+                document.getElementById('closeModalButton').addEventListener('click', hideModal);
+                document.getElementById('withdrawButton').addEventListener('click', handleWithdrawal);
                 
                 // Keyboard controls
-                document.addEventListener('keydown', (e) => this.handleKeyDown(e));
-                document.addEventListener('keyup', (e) => this.handleKeyUp(e));
+                document.addEventListener('keydown', (e) => {
+                    if (!gameRunning) return;
+                    switch(e.key) {
+                        case 'ArrowUp': case 'w': player.moveDirection.up = true; break;
+                        case 'ArrowDown': case 's': player.moveDirection.down = true; break;
+                        case 'ArrowLeft': case 'a': player.moveDirection.left = true; break;
+                        case 'ArrowRight': case 'd': player.moveDirection.right = true; break;
+                    }
+                });
                 
-                // Touch controls
-                const allControlButtons = document.getElementById('d-pad').querySelectorAll('button');
-                allControlButtons.forEach(button => {
+                document.addEventListener('keyup', (e) => {
+                    if (!gameRunning) return;
+                    switch(e.key) {
+                        case 'ArrowUp': case 'w': player.moveDirection.up = false; break;
+                        case 'ArrowDown': case 's': player.moveDirection.down = false; break;
+                        case 'ArrowLeft': case 'a': player.moveDirection.left = false; break;
+                        case 'ArrowRight': case 'd': player.moveDirection.right = false; break;
+                    }
+                });
+                
+                // Mobile controls
+                const controlButtons = document.querySelectorAll('#d-pad button');
+                controlButtons.forEach(button => {
                     const dir = button.dataset.dir;
                     button.addEventListener('touchstart', (e) => {
                         e.preventDefault();
-                        if (this.gameRunning && dir) {
-                            this.player.moveDirection[dir] = true;
-                        }
+                        if (gameRunning) player.moveDirection[dir] = true;
                     });
                     button.addEventListener('touchend', (e) => {
                         e.preventDefault();
-                        if (this.gameRunning && dir) {
-                            this.player.moveDirection[dir] = false;
-                        }
+                        if (gameRunning) player.moveDirection[dir] = false;
                     });
                     button.addEventListener('mousedown', () => {
-                        if (this.gameRunning && dir) {
-                            this.player.moveDirection[dir] = true;
-                        }
+                        if (gameRunning) player.moveDirection[dir] = true;
                     });
                     button.addEventListener('mouseup', () => {
-                        if (this.gameRunning && dir) {
-                            this.player.moveDirection[dir] = false;
-                        }
-                    });
-                    button.addEventListener('mouseleave', () => {
-                        if (this.gameRunning && dir) {
-                            this.player.moveDirection[dir] = false;
-                        }
+                        if (gameRunning) player.moveDirection[dir] = false;
                     });
                 });
             }
             
-            handleKeyDown(e) {
-                if (!this.gameRunning) return;
-                switch (e.key) {
-                    case 'ArrowUp': case 'w': this.player.moveDirection.up = true; break;
-                    case 'ArrowDown': case 's': this.player.moveDirection.down = true; break;
-                    case 'ArrowLeft': case 'a': this.player.moveDirection.left = true; break;
-                    case 'ArrowRight': case 'd': this.player.moveDirection.right = true; break;
-                    case ' ': this.shoot(); break;
-                }
-            }
-            
-            handleKeyUp(e) {
-                if (!this.gameRunning) return;
-                switch (e.key) {
-                    case 'ArrowUp': case 'w': this.player.moveDirection.up = false; break;
-                    case 'ArrowDown': case 's': this.player.moveDirection.down = false; break;
-                    case 'ArrowLeft': case 'a': this.player.moveDirection.left = false; break;
-                    case 'ArrowRight': case 'd': this.player.moveDirection.right = false; break;
-                }
-            }
-            
-            init() {
-                this.resizeCanvas();
-                window.addEventListener('resize', () => this.resizeCanvas());
-                
-                // Initialize game state
-                this.highScore = parseInt(localStorage.getItem('bongoHighScore')) || 0;
-                this.totalTokensEarned = parseInt(localStorage.getItem('bongoTotalTokens')) || 0;
-                
-                // Show game UI - FIXED THE TYPO HERE
-                document.getElementById('loadingMessage').classList.add('hidden');
-                document.getElementById('game-ui').classList.remove('hidden'); // Fixed from 'gameUI' to 'game-ui'
-                
-                // Update displays
-                document.getElementById('highScore').textContent = this.highScore;
-                document.getElementById('totalTokens').textContent = this.totalTokensEarned;
-                document.getElementById('userIdDisplay').textContent = 'local-player';
-                
-                // Draw initial screen
-                this.draw();
-            }
-            
-            resizeCanvas() {
-                const container = document.getElementById('game-container');
-                const size = container.clientWidth - 32;
-                this.canvas.width = size;
-                this.canvas.height = size;
-                
-                // Position player
-                if (this.player) {
-                    this.player.x = (this.canvas.width / 2) - (this.player.width / 2);
-                    this.player.y = this.canvas.height - this.player.height - 20;
-                }
-                
-                // Redraw if game is not running
-                if (!this.gameRunning) {
-                    this.draw();
-                }
-            }
-            
-            startGame() {
+            function startGame() {
+                console.log("Starting game...");
                 // Reset game state
-                this.score = 0;
-                this.level = 1;
-                this.sessionTokens = 0;
-                this.scoreAtLastTokenGrant = 0;
-                this.coinSpeedMultiplier = 1;
-                this.maxCoinsOnScreen = 10;
-                this.targetCoinSpawnTime = 800;
-                this.currentShootCooldown = 150;
-                this.coinSpawnTimer = 0;
-                this.lastShotTime = 0;
-                this.levelUpMessage = null;
-                this.bullets = [];
-                this.coins = [];
+                score = 0;
+                level = 1;
+                sessionTokens = 0;
+                bullets = [];
+                coins = [];
+                gameRunning = true;
                 
-                // Initialize player
-                this.player = {
-                    width: 40, 
-                    height: 60, 
-                    x: (this.canvas.width / 2) - (40 / 2), 
-                    y: this.canvas.height - 60 - 20, 
-                    speed: 300,
-                    moveDirection: { up: false, down: false, left: false, right: false }
-                };
+                // Reset player position
+                player.x = canvas.width / 2 - 20;
+                player.y = canvas.height - 80;
                 
                 // Update UI
-                document.getElementById('currentScore').textContent = this.score;
-                document.getElementById('currentLevel').textContent = this.level;
-                document.getElementById('sessionTokens').textContent = this.sessionTokens;
+                document.getElementById('currentScore').textContent = score;
+                document.getElementById('currentLevel').textContent = level;
+                document.getElementById('sessionTokens').textContent = sessionTokens;
                 document.getElementById('gameOverModal').classList.add('hidden');
                 document.getElementById('startButton').textContent = 'RESTART';
                 
                 // Start game loop
-                this.gameRunning = true;
-                this.lastTime = performance.now();
-                requestAnimationFrame((time) => this.gameLoop(time));
+                gameLoop();
             }
             
-            gameLoop(currentTime) {
-                if (!this.gameRunning) return;
+            function gameLoop() {
+                if (!gameRunning) return;
                 
-                const deltaTime = (currentTime - this.lastTime) / 1000;
-                this.lastTime = currentTime;
-                
-                this.update(deltaTime, currentTime);
-                this.draw();
-                
-                requestAnimationFrame((time) => this.gameLoop(time));
+                update();
+                draw();
+                requestAnimationFrame(gameLoop);
             }
             
-            update(deltaTime, currentTime) {
-                this.shoot(currentTime);
-                this.updatePlayer(deltaTime);
+            function update() {
+                // Move player
+                if (player.moveDirection.left) player.x -= player.speed;
+                if (player.moveDirection.right) player.x += player.speed;
+                if (player.moveDirection.up) player.y -= player.speed;
+                if (player.moveDirection.down) player.y += player.speed;
                 
-                // Spawn coins
-                this.coinSpawnTimer += deltaTime * 1000;
-                if (this.coinSpawnTimer > this.targetCoinSpawnTime && 
-                    this.coins.length < this.maxCoinsOnScreen) {
-                    this.spawnCoin();
-                    this.coinSpawnTimer = 0;
+                // Keep player in bounds
+                player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+                player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+                
+                // Auto-shoot bullets
+                if (Math.random() < 0.1) {
+                    bullets.push({
+                        x: player.x + player.width / 2,
+                        y: player.y,
+                        radius: 5,
+                        speed: 8
+                    });
                 }
                 
-                this.updateCoins(deltaTime);
-                this.updateBullets(deltaTime);
-                this.checkLevelUp();
-                this.checkTokenGrant();
-            }
-            
-            shoot(currentTime) {
-                if (!this.gameRunning || currentTime - this.lastShotTime < this.currentShootCooldown) return;
+                // Spawn coins randomly
+                if (Math.random() < 0.05 && coins.length < 10) {
+                    coins.push({
+                        x: Math.random() * (canvas.width - 30),
+                        y: -30,
+                        radius: 15,
+                        speed: 2 + Math.random() * 2
+                    });
+                }
                 
-                this.lastShotTime = currentTime;
-                
-                this.bullets.push({
-                    x: this.player.x + this.player.width / 2,
-                    y: this.player.y,
-                    radius: 5,
-                    speed: 600
-                });
-            }
-            
-            updatePlayer(deltaTime) {
-                const dx = (this.player.moveDirection.right - this.player.moveDirection.left) * 
-                          this.player.speed * deltaTime;
-                const dy = (this.player.moveDirection.down - this.player.moveDirection.up) * 
-                          this.player.speed * deltaTime;
-                
-                this.player.x += dx;
-                this.player.y += dy;
-                
-                // Constrain player to canvas
-                this.player.x = Math.max(0, Math.min(this.canvas.width - this.player.width, this.player.x));
-                this.player.y = Math.max(
-                    this.canvas.height - this.player.height - 100,
-                    Math.min(this.canvas.height - this.player.height - 20, this.player.y)
-                );
-            }
-            
-            spawnCoin() {
-                const radius = 15 + Math.random() * 10; // 15-25
-                const x = Math.random() * (this.canvas.width - radius * 2) + radius;
-                const y = -radius;
-                const speed = 100 * this.coinSpeedMultiplier;
-                
-                this.coins.push({ x, y, radius, speed });
-            }
-            
-            updateCoins(deltaTime) {
-                for (let i = this.coins.length - 1; i >= 0; i--) {
-                    const coin = this.coins[i];
-                    coin.y += coin.speed * deltaTime;
+                // Update bullets
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    bullets[i].y -= bullets[i].speed;
                     
-                    // Check if coin reached bottom
-                    if (coin.y - coin.radius > this.canvas.height) {
-                        this.coins.splice(i, 1);
-                        this.gameOver();
+                    // Remove bullets that go off screen
+                    if (bullets[i].y < -10) {
+                        bullets.splice(i, 1);
+                        continue;
+                    }
+                    
+                    // Check bullet-coin collisions
+                    for (let j = coins.length - 1; j >= 0; j--) {
+                        const dx = bullets[i].x - coins[j].x;
+                        const dy = bullets[i].y - coins[j].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < bullets[i].radius + coins[j].radius) {
+                            // Hit!
+                            score++;
+                            document.getElementById('currentScore').textContent = score;
+                            
+                            // Award tokens every 5 points
+                            if (score % 5 === 0) {
+                                sessionTokens += 10;
+                                document.getElementById('sessionTokens').textContent = sessionTokens;
+                            }
+                            
+                            // Level up every 10 points
+                            if (score % 10 === 0) {
+                                level++;
+                                document.getElementById('currentLevel').textContent = level;
+                            }
+                            
+                            coins.splice(j, 1);
+                            bullets.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+                
+                // Update coins
+                for (let i = coins.length - 1; i >= 0; i--) {
+                    coins[i].y += coins[i].speed;
+                    
+                    // Check if coin reached bottom (game over)
+                    if (coins[i].y > canvas.height + 30) {
+                        gameOver();
                         return;
                     }
                 }
             }
             
-            updateBullets(deltaTime) {
-                for (let i = this.bullets.length - 1; i >= 0; i--) {
-                    const bullet = this.bullets[i];
-                    bullet.y -= bullet.speed * deltaTime;
-                    
-                    // Remove bullets that go off screen
-                    if (bullet.y + bullet.radius < 0) {
-                        this.bullets.splice(i, 1);
-                        continue;
-                    }
-                    
-                    // Check for collisions with coins
-                    let hit = false;
-                    for (let j = this.coins.length - 1; j >= 0; j--) {
-                        const coin = this.coins[j];
-                        const dx = bullet.x - coin.x;
-                        const dy = bullet.y - coin.y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (distance < bullet.radius + coin.radius) {
-                            this.score++;
-                            document.getElementById('currentScore').textContent = this.score;
-                            this.coins.splice(j, 1);
-                            hit = true;
-                            break;
-                        }
-                    }
-                    
-                    if (hit) {
-                        this.bullets.splice(i, 1);
-                    }
-                }
-            }
-            
-            checkLevelUp() {
-                const scoreNeeded = this.level * 30;
-                
-                if (this.score >= scoreNeeded && this.level < 15) {
-                    this.level++;
-                    document.getElementById('currentLevel').textContent = this.level;
-                    
-                    // Increase difficulty
-                    this.coinSpeedMultiplier += 0.25;
-                    this.maxCoinsOnScreen = Math.min(30, this.maxCoinsOnScreen + 3);
-                    this.targetCoinSpawnTime = Math.max(150, this.targetCoinSpawnTime - 60);
-                    this.currentShootCooldown = Math.max(50, this.currentShootCooldown - 10);
-                    
-                    // Show level up message
-                    this.levelUpMessage = { timestamp: performance.now() };
-                }
-            }
-            
-            checkTokenGrant() {
-                const TOKEN_THRESHOLD = 50;
-                const TOKEN_REWARD_MULTIPLIER = 100;
-                
-                const currentTokenThresholdCount = Math.floor(this.score / TOKEN_THRESHOLD);
-                const tokensAlreadyGrantedCount = Math.floor(this.scoreAtLastTokenGrant / TOKEN_THRESHOLD);
-                
-                const incrementsEarned = currentTokenThresholdCount - tokensAlreadyGrantedCount;
-                const tokensToGrant = incrementsEarned * TOKEN_REWARD_MULTIPLIER;
-                
-                if (tokensToGrant > 0) {
-                    this.sessionTokens += tokensToGrant;
-                    this.scoreAtLastTokenGrant = currentTokenThresholdCount * TOKEN_THRESHOLD;
-                    
-                    document.getElementById('sessionTokens').textContent = this.sessionTokens;
-                }
-            }
-            
-            gameOver() {
-                this.gameRunning = false;
-                
-                // Update final score display
-                document.getElementById('finalScore').textContent = this.score;
-                document.getElementById('finalSessionTokens').textContent = this.sessionTokens;
-                
-                // Check for new high score
-                const isNewHighScore = this.score > this.highScore;
-                if (isNewHighScore) {
-                    this.highScore = this.score;
-                    document.getElementById('newHighScore').textContent = this.score;
-                    localStorage.setItem('bongoHighScore', this.score.toString());
-                } else {
-                    document.getElementById('newHighScore').textContent = this.highScore;
-                }
-                
-                // Save tokens
-                this.totalTokensEarned += this.sessionTokens;
-                localStorage.setItem('bongoTotalTokens', this.totalTokensEarned.toString());
-                document.getElementById('totalTokens').textContent = this.totalTokensEarned;
-                
-                // Show game over modal
-                document.getElementById('gameOverModal').classList.remove('hidden');
-            }
-            
-            draw() {
+            function draw() {
                 // Clear canvas
-                this.ctx.fillStyle = '#0b0f14';
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                ctx.fillStyle = '#0b0f14';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                // Draw player if exists
-                if (this.player) {
-                    this.drawPlayer();
-                }
+                // Draw player (Bongo)
+                ctx.fillStyle = '#38b000';
+                ctx.fillRect(player.x, player.y, player.width, player.height);
                 
                 // Draw bullets
-                this.bullets.forEach(bullet => {
-                    this.ctx.beginPath();
-                    this.ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
-                    this.ctx.fillStyle = '#ffcc00';
-                    this.ctx.fill();
+                ctx.fillStyle = '#ffcc00';
+                bullets.forEach(bullet => {
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+                    ctx.fill();
                 });
                 
                 // Draw coins
-                this.coins.forEach(coin => {
-                    this.ctx.beginPath();
-                    this.ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
-                    this.ctx.fillStyle = '#ffcc00';
-                    this.ctx.fill();
-                    this.ctx.strokeStyle = '#e6b800';
-                    this.ctx.lineWidth = 2;
-                    this.ctx.stroke();
-                    this.ctx.fillStyle = '#0b0f14';
-                    this.ctx.font = `${coin.radius}px Inter`;
-                    this.ctx.textAlign = 'center';
-                    this.ctx.textBaseline = 'middle';
-                    this.ctx.fillText('$', coin.x, coin.y);
+                coins.forEach(coin => {
+                    ctx.fillStyle = '#ffcc00';
+                    ctx.beginPath();
+                    ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#e6b800';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.fillStyle = '#0b0f14';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('$', coin.x, coin.y);
                 });
-                
-                // Draw level up message
-                this.drawLevelUpMessage();
             }
             
-            drawPlayer() {
-                // Body
-                this.ctx.fillStyle = '#38b000';
-                this.ctx.fillRect(this.player.x, this.player.y, this.player.width, this.player.height);
+            function gameOver() {
+                gameRunning = false;
                 
-                // Lower body
-                this.ctx.fillStyle = '#ff6347';
-                this.ctx.fillRect(
-                    this.player.x, 
-                    this.player.y + this.player.height * 0.4, 
-                    this.player.width, 
-                    this.player.height * 0.6
-                );
+                // Update final score display
+                document.getElementById('finalScore').textContent = score;
+                document.getElementById('finalSessionTokens').textContent = sessionTokens;
                 
-                // Head
-                this.ctx.fillStyle = '#ff8c00';
-                this.ctx.fillRect(this.player.x, this.player.y - 5, this.player.width, 10);
-                
-                // Eyes
-                this.ctx.fillStyle = 'white';
-                this.ctx.beginPath();
-                this.ctx.arc(
-                    this.player.x + this.player.width * 0.3, 
-                    this.player.y + this.player.height * 0.25, 
-                    3, 0, Math.PI * 2
-                );
-                this.ctx.arc(
-                    this.player.x + this.player.width * 0.7, 
-                    this.player.y + this.player.height * 0.25, 
-                    3, 0, Math.PI * 2
-                );
-                this.ctx.fill();
-            }
-            
-            drawLevelUpMessage() {
-                if (!this.levelUpMessage) return;
-                
-                const timePassed = performance.now() - this.levelUpMessage.timestamp;
-                const duration = 2000;
-                
-                if (timePassed < duration) {
-                    const opacity = Math.max(0, 1 - (timePassed / duration));
-                    this.ctx.fillStyle = `rgba(0, 243, 166, ${opacity})`;
-                    this.ctx.font = 'bold 36px Inter';
-                    this.ctx.textAlign = 'center';
-                    this.ctx.fillText(
-                        `LEVEL ${this.level}! RISE & GRIND!`, 
-                        this.canvas.width / 2, 
-                        this.canvas.height / 2
-                    );
-                } else {
-                    this.levelUpMessage = null;
+                // Check for new high score
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('bongoHighScore', highScore);
                 }
+                
+                // Save tokens
+                totalTokens = parseInt(totalTokens) + sessionTokens;
+                localStorage.setItem('bongoTotalTokens', totalTokens);
+                document.getElementById('totalTokens').textContent = totalTokens;
+                
+                document.getElementById('newHighScore').textContent = highScore;
+                document.getElementById('gameOverModal').classList.remove('hidden');
             }
             
-            handleWithdrawal() {
-                const withdrawalMessage = document.getElementById('withdrawalMessage');
-                withdrawalMessage.textContent = "Processing...";
-                
-                const address = document.getElementById('solanaAddress').value.trim();
+            function handleWithdrawal() {
+                const address = document.getElementById('solanaAddress').value;
                 const amount = parseInt(document.getElementById('withdrawalAmount').value);
+                const messageEl = document.getElementById('withdrawalMessage');
                 
-                // Validate address (simplified)
-                if (!address || address.length < 32 || address.length > 44) {
-                    this.showMessage(
-                        "Invalid Address", 
-                        "Please enter a valid-looking Solana address (32-44 characters).", 
-                        true
-                    );
-                    withdrawalMessage.textContent = "";
+                if (!address) {
+                    showMessage('Error', 'Please enter a wallet address');
                     return;
                 }
                 
                 if (isNaN(amount) || amount < 100) {
-                    this.showMessage(
-                        "Invalid Amount", 
-                        "Withdrawal amount must be a number and at least 100 tokens.", 
-                        true
-                    );
-                    withdrawalMessage.textContent = "";
+                    showMessage('Error', 'Minimum withdrawal is 100 tokens');
                     return;
                 }
                 
-                if (amount > this.totalTokensEarned) {
-                    this.showMessage(
-                        "Insufficient Funds", 
-                        `You only have ${this.totalTokensEarned} tokens. Cannot withdraw ${amount}.`, 
-                        true
-                    );
-                    withdrawalMessage.textContent = "";
+                if (amount > totalTokens) {
+                    showMessage('Error', 'Insufficient tokens');
                     return;
                 }
                 
                 // Simulate withdrawal
-                this.totalTokensEarned -= amount;
-                document.getElementById('totalTokens').textContent = this.totalTokensEarned;
-                localStorage.setItem('bongoTotalTokens', this.totalTokensEarned.toString());
+                totalTokens -= amount;
+                localStorage.setItem('bongoTotalTokens', totalTokens);
+                document.getElementById('totalTokens').textContent = totalTokens;
                 
-                this.showMessage(
-                    "Withdrawal Complete!",
-                    `${amount} OG Tokens successfully withdrawn to Solana address: ${address}. (Simulated)`,
-                    false
-                );
-                
-                withdrawalMessage.textContent = "Tokens deducted successfully!";
-                document.getElementById('withdrawalAmount').value = 100;
-                
+                messageEl.textContent = `Withdrew ${amount} tokens!`;
                 setTimeout(() => {
-                    withdrawalMessage.textContent = "";
-                }, 5000);
+                    messageEl.textContent = '';
+                }, 3000);
+                
+                showMessage('Success', `Withdrew ${amount} tokens to ${address}`);
             }
             
-            showMessage(title, body, isError = false) {
+            function showMessage(title, body) {
                 document.getElementById('modalTitle').textContent = title;
                 document.getElementById('modalBody').textContent = body;
-                
-                const modal = document.getElementById('messageModal');
-                const modalDiv = modal.querySelector('div');
-                const closeButton = document.getElementById('closeModalButton');
-                
-                if (isError) {
-                    document.getElementById('modalTitle').classList.remove('text-yellow-500');
-                    document.getElementById('modalTitle').classList.add('text-red-500');
-                    modalDiv.classList.remove('border-yellow-500');
-                    modalDiv.classList.add('border-red-500');
-                    closeButton.classList.remove('bg-yellow-600');
-                    closeButton.classList.add('bg-red-600');
-                } else {
-                    document.getElementById('modalTitle').classList.remove('text-red-500');
-                    document.getElementById('modalTitle').classList.add('text-yellow-500');
-                    modalDiv.classList.remove('border-red-500');
-                    modalDiv.classList.add('border-yellow-500');
-                    closeButton.classList.remove('bg-red-600');
-                    closeButton.classList.add('bg-yellow-600');
-                }
-                
-                modal.classList.remove('hidden');
+                document.getElementById('messageModal').classList.remove('hidden');
             }
             
-            hideModal() {
+            function hideModal() {
                 document.getElementById('messageModal').classList.add('hidden');
             }
+            
+            console.log("Game initialized successfully!");
         }
-
-        // Start the game when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            new BongoTokenHunter();
-        });
     </script>
 </body>
 </html>

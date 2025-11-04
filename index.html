@@ -26,7 +26,7 @@
             border-radius: 1.5rem;
             box-shadow: 0 0 30px rgba(0, 255, 170, 0.2);
             padding: 1rem;
-            max-width: 550px;
+            max-width: 500px;
             width: 100%;
         }
         
@@ -36,8 +36,8 @@
             background-color: #0b0f14;
             display: block;
             width: 100%;
-            height: 400px;
-            margin-bottom: 1rem;
+            height: 300px;
+            margin-bottom: 0.5rem;
         }
         
         .control-button {
@@ -143,7 +143,7 @@
             <span id="soundIcon">🔊</span>
         </div>
         
-        <h1 class="text-3xl font-extrabold text-center text-[#00f3a6] mb-4">Bongo Token Hunter</h1>
+        <h1 class="text-2xl font-extrabold text-center text-[#00f3a6] mb-2">Bongo Token Hunter</h1>
         
         <div id="loadingMessage" class="text-center text-white p-4">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#00f3a6]"></div>
@@ -151,69 +151,69 @@
         </div>
         
         <div id="game-ui" class="hidden">
-            <div class="grid grid-cols-3 gap-2 mb-4 text-white font-bold text-lg p-2 bg-[#21262d] rounded-lg">
+            <div class="grid grid-cols-3 gap-2 mb-2 text-white font-bold text-sm p-2 bg-[#21262d] rounded-lg">
                 <p class="text-blue-400">Level: <span id="currentLevel">1</span></p>
                 <p class="text-[#ffcc00] text-center">Score: <span id="currentScore">0</span></p>
-                <p class="text-[#00f3a6] text-right">High Score: <span id="highScore">0</span></p>
+                <p class="text-[#00f3a6] text-right">High: <span id="highScore">0</span></p>
             </div>
             
-            <div class="flex justify-between items-center mb-4 text-white font-bold text-sm p-2 bg-[#313a46] rounded-lg border border-red-400">
+            <div class="flex justify-between items-center mb-2 text-white font-bold text-xs p-2 bg-[#313a46] rounded-lg border border-red-400">
                 <p class="text-gray-300">Tokens: <span id="sessionTokens" class="font-extrabold text-red-400">0</span></p>
                 <p class="text-red-400">Total: <span id="totalTokens">0</span></p>
             </div>
 
-            <canvas id="gameCanvas" width="500" height="400"></canvas>
+            <canvas id="gameCanvas" width="450" height="300"></canvas>
             
-            <p class="text-center text-gray-400 text-sm mb-4">Use controls to move Bongo and collect coins!</p>
-
-            <div class="flex justify-between items-center p-3">
-                <div id="d-pad" class="grid grid-cols-3 grid-rows-3 gap-2 w-40 h-40">
-                    <button data-dir="up" class="control-button col-start-2 row-start-1 bg-[#00ffaa] text-gray-900 font-bold rounded-lg p-2">↑</button>
-                    <button data-dir="left" class="control-button col-start-1 row-start-2 bg-[#00ffaa] text-gray-900 font-bold rounded-lg p-2">←</button>
+            <div class="flex justify-between items-center mt-2 mb-2">
+                <div id="d-pad" class="grid grid-cols-3 grid-rows-3 gap-1 w-32 h-32">
+                    <button data-dir="up" class="control-button col-start-2 row-start-1 bg-[#00ffaa] text-gray-900 font-bold rounded-lg p-1">↑</button>
+                    <button data-dir="left" class="control-button col-start-1 row-start-2 bg-[#00ffaa] text-gray-900 font-bold rounded-lg p-1">←</button>
                     <div class="col-start-2 row-start-2 flex items-center justify-center text-xs text-gray-500">MOVE</div>
-                    <button data-dir="right" class="control-button col-start-3 row-start-2 bg-[#00ffaa] text-gray-900 font-bold rounded-lg p-2">→</button>
-                    <button data-dir="down" class="control-button col-start-2 row-start-3 bg-[#00ffaa] text-gray-900 font-bold rounded-lg p-2">↓</button>
+                    <button data-dir="right" class="control-button col-start-3 row-start-2 bg-[#00ffaa] text-gray-900 font-bold rounded-lg p-1">→</button>
+                    <button data-dir="down" class="control-button col-start-2 row-start-3 bg-[#00ffaa] text-gray-900 font-bold rounded-lg p-1">↓</button>
                 </div>
 
-                <div class="flex flex-col space-y-3 w-40 h-40 justify-center items-center">
-                    <button id="startButton" class="ui-button bg-[#ffcc00] text-gray-900 font-extrabold py-3 px-6 rounded-xl uppercase w-full">
-                        START GAME
+                <div class="flex flex-col space-y-2 w-32 h-32 justify-center items-center">
+                    <button id="startButton" class="ui-button bg-[#ffcc00] text-gray-900 font-extrabold py-2 px-4 rounded-lg uppercase text-sm w-full">
+                        START
                     </button>
                 </div>
             </div>
 
-            <div class="mt-8 p-4 bg-[#21262d] rounded-xl border border-blue-500">
-                <h3 class="text-xl font-bold text-blue-400 mb-4 text-center">Token Vault</h3>
-                <div class="mb-4">
-                    <input type="text" id="solanaAddress" placeholder="Solana Address" class="w-full p-2 bg-[#0d1117] text-white border border-gray-600 rounded-lg">
+            <p class="text-center text-gray-400 text-xs mb-2">Use controls to move Bongo and collect coins!</p>
+
+            <div class="mt-2 p-3 bg-[#21262d] rounded-xl border border-blue-500">
+                <h3 class="text-lg font-bold text-blue-400 mb-2 text-center">Token Vault</h3>
+                <div class="mb-2">
+                    <input type="text" id="solanaAddress" placeholder="Solana Address" class="w-full p-2 bg-[#0d1117] text-white border border-gray-600 rounded-lg text-sm">
                 </div>
-                <div class="mb-4">
-                    <input type="number" id="withdrawalAmount" placeholder="100" min="100" class="w-full p-2 bg-[#0d1117] text-white border border-gray-600 rounded-lg">
+                <div class="mb-2">
+                    <input type="number" id="withdrawalAmount" placeholder="100" min="100" class="w-full p-2 bg-[#0d1117] text-white border border-gray-600 rounded-lg text-sm">
                 </div>
-                <button id="withdrawButton" class="ui-button bg-blue-600 text-white font-extrabold py-3 px-6 rounded-xl uppercase w-full">
+                <button id="withdrawButton" class="ui-button bg-blue-600 text-white font-extrabold py-2 px-4 rounded-lg uppercase text-sm w-full">
                     Withdraw Tokens
                 </button>
-                <p id="withdrawalMessage" class="text-center mt-3 text-sm h-5"></p>
+                <p id="withdrawalMessage" class="text-center mt-2 text-xs h-4"></p>
             </div>
         </div>
 
         <div id="gameOverModal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden justify-center items-center p-4">
-            <div class="bg-[#1e2a36] p-8 rounded-2xl text-center max-w-sm w-full border-4 border-red-500 game-over">
-                <h2 class="text-4xl font-black text-red-500 mb-4">GAME OVER!</h2>
-                <p class="text-xl text-white mb-2">Score: <span id="finalScore" class="font-extrabold text-[#ffcc00]">0</span></p>
-                <p class="text-xl text-white mb-4">Tokens: <span id="finalSessionTokens" class="font-extrabold text-red-400">0</span></p>
-                <p class="text-xl text-white mb-6">High Score: <span id="newHighScore" class="font-extrabold text-[#00f3a6]">0</span></p>
-                <button id="restartButton" class="ui-button bg-red-600 text-white font-extrabold py-3 px-8 rounded-xl uppercase text-lg">
+            <div class="bg-[#1e2a36] p-6 rounded-2xl text-center max-w-sm w-full border-4 border-red-500 game-over">
+                <h2 class="text-3xl font-black text-red-500 mb-3">GAME OVER!</h2>
+                <p class="text-lg text-white mb-2">Score: <span id="finalScore" class="font-extrabold text-[#ffcc00]">0</span></p>
+                <p class="text-lg text-white mb-3">Tokens: <span id="finalSessionTokens" class="font-extrabold text-red-400">0</span></p>
+                <p class="text-lg text-white mb-4">High Score: <span id="newHighScore" class="font-extrabold text-[#00f3a6]">0</span></p>
+                <button id="restartButton" class="ui-button bg-red-600 text-white font-extrabold py-2 px-6 rounded-xl uppercase text-base">
                     Play Again
                 </button>
             </div>
         </div>
 
         <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden justify-center items-center p-4">
-            <div class="bg-[#1e2a36] p-8 rounded-2xl text-center max-w-sm w-full border-4 border-yellow-500">
-                <h2 id="modalTitle" class="text-3xl font-black text-yellow-500 mb-4">Alert</h2>
-                <p id="modalBody" class="text-lg text-white mb-6">Message</p>
-                <button id="closeModalButton" class="ui-button bg-yellow-600 text-gray-900 font-extrabold py-3 px-8 rounded-xl uppercase text-lg">
+            <div class="bg-[#1e2a36] p-6 rounded-2xl text-center max-w-sm w-full border-4 border-yellow-500">
+                <h2 id="modalTitle" class="text-2xl font-black text-yellow-500 mb-3">Alert</h2>
+                <p id="modalBody" class="text-base text-white mb-4">Message</p>
+                <button id="closeModalButton" class="ui-button bg-yellow-600 text-gray-900 font-extrabold py-2 px-6 rounded-xl uppercase text-base">
                     OK
                 </button>
             </div>
@@ -237,8 +237,8 @@
         let player = {
             x: 0,
             y: 0,
-            width: 40,
-            height: 60,
+            width: 30,
+            height: 45,
             speed: 4,
             moveDirection: { up: false, down: false, left: false, right: false }
         };
@@ -665,7 +665,7 @@
                 bullets.push({
                     x: player.x + player.width / 2,
                     y: player.y,
-                    radius: 5,
+                    radius: 4,
                     speed: 6 * gameSpeed
                 });
                 if (sounds.shoot) sounds.shoot();
@@ -677,7 +677,7 @@
                 coins.push({
                     x: Math.random() * (canvas.width - 30),
                     y: -30,
-                    radius: 12 + Math.random() * 8, // 12-20 radius
+                    radius: 10 + Math.random() * 6, // 10-16 radius
                     speed: (1.5 + Math.random() * 2) * gameSpeed,
                     rotation: 0
                 });
@@ -800,8 +800,8 @@
             
             ctx.fillStyle = 'white';
             ctx.beginPath();
-            ctx.arc(player.x + player.width * 0.3, player.y + player.height * 0.3, 4, 0, Math.PI * 2);
-            ctx.arc(player.x + player.width * 0.7, player.y + player.height * 0.3, 4, 0, Math.PI * 2);
+            ctx.arc(player.x + player.width * 0.3, player.y + player.height * 0.3, 3, 0, Math.PI * 2);
+            ctx.arc(player.x + player.width * 0.7, player.y + player.height * 0.3, 3, 0, Math.PI * 2);
             ctx.fill();
             
             // DRAW BULLETS
@@ -828,7 +828,7 @@
                 ctx.stroke();
                 
                 ctx.fillStyle = '#0b0f14';
-                ctx.font = 'bold 16px Arial';
+                ctx.font = 'bold 14px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText('$', 0, 0);
